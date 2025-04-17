@@ -146,8 +146,9 @@ def random_givens_chain(n, k=10):
         Theta = Theta @ G                             # Apply to chain
     return Theta
 
-def givens_matrix(m, n):
+def givens_matrix(m, n,seed = 1):
     """Constructs rectangular Ω = D'' Θ' D' Θ D F R."""
+    np.random.seed(seed)
     # Random diagonal matrices (D: n×n, D': m×m, D'': m×m)
     D = np.diag(np.sign(np.random.randn(n)))  # Efficient ±1 diagonal
     D_prime = np.diag(np.sign(np.random.randn(m)))
@@ -166,7 +167,7 @@ def givens_matrix(m, n):
     return Omega.real
 
 
-def generate_synthetic_matrix(m, r = 20, delta=0.01, n=None):
+def generate_synthetic_matrix(m, r = 20, delta=0.01, n=None,seed = 1):
     """
     Generates synthetic matrix A = X_GT @ Y_GT + N, where sparsity is controlled by `delta`.
     Always uses dense computation (ignores sparse optimizations).
@@ -186,6 +187,7 @@ def generate_synthetic_matrix(m, r = 20, delta=0.01, n=None):
     if n is None:
         n = int(0.75 * m)
     
+    np.random.seed(1)
     # Generate X_GT (m × r) with sparsity delta
     mask_x = np.random.rand(m, r) < delta
     X_GT = np.random.uniform(0, 1, (m, r)) * mask_x
