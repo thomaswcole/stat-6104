@@ -2,7 +2,7 @@ import numpy as np
 from scipy import sparse
 from scipy.linalg import hadamard, dft
 from numpy.random import rand, permutation
-
+from numba import njit
 
 def randomized_power_iteration(A, rank, omega=None, power_iter=3, random_state=None):
     """
@@ -46,13 +46,14 @@ def gaussian_random_matrix(n, l, seed=1):
     G = np.random.randn(n, l)
     return G / np.sqrt(l)
 
+"""
 def srht_matrix(n, l, seed=1):
-    """
+    
     Generates an n x l SRHT matrix:
     1. Random sign flip (diagonal D).
     2. Hadamard transform (H).
     3. Uniform column sampling (S).
-    """
+    
     np.random.seed(seed)
     # Pad n to next power of 2 for Hadamard
     n_pad = 2 ** int(np.ceil(np.log2(n)))
@@ -71,14 +72,48 @@ def srht_matrix(n, l, seed=1):
     # Combine: SRHT = DHS (trimmed to n rows)
     SRHT = (D @ H @ S)[:n, :] * np.sqrt(n_pad / l)  # Scaling
     return SRHT
+"""
 
-def srft_matrix(n, l, seed=1):
+def srht_matrix(n, l, seed=1):
     """
+    Generates an n x l SRHT matrix efficiently:
+    1. Random sign flip (diagonal D).
+    2. Hadamard transform (H, applied implicitly).
+    3. Uniform column sampling (S).
+    """
+    np.random.seed(seed)
+    
+    # Pad n to next power of 2
+    n_pad = 2 ** int(np.ceil(np.log2(n)))
+    
+    # Random signs for D
+    signs = np.random.choice([-1, 1], size=n_pad)
+    
+    # Uniform column sampling
+    cols = np.random.choice(n_pad, size=l, replace=True)
+    
+    # Compute SRHT = D @ H @ S efficiently
+    # S selects l columns, so H @ S is columns of H corresponding to 'cols'
+    SRHT = np.zeros((n_pad, l))
+    H = hadamard(n_pad)  # Still using hadamard for simplicity
+    for i, col in enumerate(cols):
+        SRHT[:, i] = H[:, col]  # Select column col of H
+    
+    # Apply D (element-wise multiplication by signs)
+    SRHT = signs[:, np.newaxis] * SRHT
+    
+    # Trim to n rows and scale
+    SRHT = SRHT[:n, :] * np.sqrt(n_pad / l)
+    return SRHT
+
+"""
+def srft_matrix(n, l, seed=1):
+
     Generates an n x l SRFT matrix:
     1. Random phase diagonal (D).
     2. DFT matrix (F).
     3. Uniform column sampling (S).
-    """
+
     np.random.seed(seed)
     # Diagonal matrix D (random unit complex numbers)
     D = np.diag(np.exp(1j * 2 * np.pi * np.random.rand(n)))
@@ -94,7 +129,39 @@ def srft_matrix(n, l, seed=1):
     # Combine: SRFT = DFS (scaled)
     SRFT = (D @ F @ S).real * np.sqrt(n / l)
     return SRFT
+"""
 
+def srft_matrix(n, l, seed=1):
+    """
+    Generates an n x l SRFT matrix efficiently:
+    1. Random phase diagonal (D).
+    2. DFT matrix (F, applied implicitly).
+    3. Uniform column sampling (S).
+    """
+    np.random.seed(seed)
+    
+    # Random phases for D (diagonal entries)
+    phases = np.exp(1j * 2 * np.pi * np.random.rand(n))
+    
+    # Uniform column sampling (select l columns)
+    cols = np.random.choice(n, size=l, replace=True)
+    
+    # Compute SRFT = D @ F @ S efficiently
+    # S selects l columns, so F @ S is columns of F corresponding to 'cols'
+    # Instead of forming F, compute FFT on the standard basis vectors e_j for j in cols
+    SRFT = np.zeros((n, l), dtype=np.complex128)
+    for i, col in enumerate(cols):
+        # Compute FFT of the standard basis vector e_col
+        e_col = np.zeros(n, dtype=np.complex128)
+        e_col[col] = 1
+        SRFT[:, i] = np.fft.fft(e_col, norm="ortho")
+    
+    # Apply D (element-wise multiplication of rows by phases)
+    SRFT = phases[:, np.newaxis] * SRFT
+    
+    # Take real part and scale
+    SRFT = SRFT.real * np.sqrt(n / l)
+    return SRFT
 
 def countsketch_matrix(n, l, seed=1):
     """
