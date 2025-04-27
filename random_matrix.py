@@ -2,7 +2,6 @@ import numpy as np
 from scipy import sparse
 from scipy.linalg import hadamard, dft
 from numpy.random import rand, permutation
-from numba import njit
 
 def randomized_power_iteration(A, rank, omega=None, power_iter=3, random_state=None):
     """
