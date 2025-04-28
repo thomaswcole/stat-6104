@@ -80,7 +80,7 @@ def srht_matrix(n, l, seed=1):
     2. Hadamard transform (H, applied implicitly).
     3. Uniform column sampling (S).
     """
-    np.random.seed(seed)
+    np.random.RandomState(seed)
     
     # Pad n to next power of 2
     n_pad = 2 ** int(np.ceil(np.log2(n)))
