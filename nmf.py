@@ -99,7 +99,7 @@ def nmf_compress_mu(A,r,max_iter = 100,random_state = 1,tol = 1e-4, projection_t
     return F, G.T, errors
 
 
-def nmf_structured_compress_mu(A, r, max_iter=100, random_state=1, tol=1e-4, power_iter=3, oversampling=10,projection_type = 'gaussian'):
+def nmf_structured_compress_mu(A, r, max_iter=100, random_state=1, tol=1e-4, power_iter=2, oversampling=10,projection_type = 'gaussian'):
     """ 
     Modified NMF with structured random projections using randomized power iteration
     """
@@ -267,7 +267,7 @@ def nmf_compress_hals(A, r, max_iter=100, tol=1e-4, random_state=None,projection
 
     return F, G.T, errors
 
-def nmf_structured_compress_hals(A, r, max_iter=100, tol=1e-4, random_state=None, power_iter=3, oversampling=10, projection_type='gaussian'):
+def nmf_structured_compress_hals(A, r, max_iter=100, tol=1e-4, random_state=None, power_iter=2, oversampling=10, projection_type='gaussian'):
     """
     Structured Compressed Non-negative Matrix Factorization using Hierarchical Alternating Least Squares.
 
